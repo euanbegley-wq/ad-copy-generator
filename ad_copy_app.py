@@ -17,6 +17,7 @@ st.title("✍️ Services Trust-Building Ad Copy Generator")
 st.markdown("Generates professional ad copy using **Google Gemini**.")
 st.divider()
 
+# Create two main columns
 col1, col2 = st.columns(2)
 
 # --- LEFT COLUMN ---
@@ -24,31 +25,25 @@ with col1:
     business_name = st.text_input("Business Name", placeholder="e.g., Apex Plumbing")
     years_exp = st.number_input("Years Experience", value=5)
     team_size = st.number_input("Team Size", value=1)
-    availability = st.text_input("Availability", placeholder="e.g., Next day")
 
 # --- RIGHT COLUMN ---
 with col2:
     jobs_completed = st.number_input("Jobs Completed", value=100)
     
-    # --- NESTED COLUMNS FOR SIDE-BY-SIDE PRICING ---
-    # We create two small columns INSIDE col2 so these sit on the same row
+    # Nested columns for Pricing to keep them side-by-side
     pricing_col1, pricing_col2 = st.columns(2)
-    
     with pricing_col1:
         pricing_options = [
-            "Fixed Price", 
-            "Hourly Rate", 
-            "Daily Rate", 
-            "Price per Unit/Item", 
-            "Free Quote", 
-            "No Hidden Fees", 
-            "No Call-Out Charge", 
-            "All-Inclusive"
+            "Fixed Price", "Hourly Rate", "Daily Rate", "Price per Unit/Item", 
+            "Free Quote", "No Hidden Fees", "No Call-Out Charge", "All-Inclusive"
         ]
         pricing_model = st.selectbox("Pricing Model", pricing_options)
         
     with pricing_col2:
         pricing_amount = st.text_input("Pricing Amount / Detail", placeholder="e.g. £50/hr")
+
+    # Moved Availability here so it aligns with 'Team Size' in col1
+    availability = st.text_input("Availability", placeholder="e.g., Next day")
 
 # --- FULL WIDTH INPUTS ---
 locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
@@ -84,8 +79,6 @@ if st.button("Generate Ad Description"):
             
             with st.spinner('Generating...'):
                 response = model.generate_content(prompt)
-                
-                # --- Remove Markdown Bolding ---
                 clean_text = response.text.replace("**", "").replace("## ", "").strip()
                 
                 st.subheader("Your Ad Copy:")
