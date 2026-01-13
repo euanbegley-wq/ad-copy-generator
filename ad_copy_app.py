@@ -13,7 +13,7 @@ else:
     has_valid_key = bool(api_key)
 
 # --- Main App UI ---
-st.title("✍️ Trust-Building Ad Copy Generator")
+st.title("✍️ Services Trust-Building Ad Copy Generator")
 st.markdown("Generates professional ad copy using **Google Gemini**.")
 st.divider()
 
@@ -64,3 +64,4 @@ if st.button("Generate Ad Description"):
                 st.text_area("Result", value=response.text, height=300)
         except Exception as e:
             st.error(f"Error: {e}")
+
