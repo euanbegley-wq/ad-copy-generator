@@ -186,11 +186,14 @@ if st.button("Generate Ad Description"):
             Generate two distinct parts: 3 Headline Options and 1 Ad Description.
 
             PART 1: HEADLINE OPTIONS (The "Golden Rule")
-            Generate 3 distinct headlines based on the format: "[Business/Category] - [Key Hook]"
+            Generate 3 distinct headlines.
+            **CRITICAL FORMAT RULE:** You MUST use the exact Business Name provided ("{business_name}") as the first part of every headline.
             
-            1. **Option 1 (The Trust Hook):** Use the strongest Trust Signal provided (e.g. "Gas Safe").
-            2. **Option 2 (The Speed/Logistics Hook):** Use Availability or Location (e.g. "Same Day Service" or "Serving London").
-            3. **Option 3 (The Authority Hook):** Use Experience or Job Count (e.g. "100+ Jobs Completed" or "5 Years Exp").
+            Format: "{business_name} - [Key Hook]"
+            
+            1. **Option 1 (The Trust Hook):** {business_name} - [Strongest Trust Signal]
+            2. **Option 2 (The Speed/Logistics Hook):** {business_name} - [Availability or Location]
+            3. **Option 3 (The Authority Hook):** {business_name} - [Experience or Job Count]
             
             *Constraint:* If a specific data point is missing for an option, fallback to the Category Name.
 
