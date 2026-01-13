@@ -27,9 +27,9 @@ with col2:
     jobs_completed = st.number_input("Jobs Completed", value=100)
     pricing = st.selectbox("Pricing", ["Fixed Price", "Hourly", "No Hidden Fees"])
     availability = st.text_input("Availability", placeholder="e.g., Next day")
-    # --- NEW INPUT ADDED HERE ---
-    locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester")
 
+# --- FULL WIDTH INPUTS START HERE ---
+locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
 trust_signals = st.text_area("Trust Signals", placeholder="e.g., Insured by AXA, Gas Safe")
 social_proof = st.text_input("Social Proof", placeholder="e.g., 500+ 5-star reviews")
 
@@ -43,7 +43,6 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- PROMPT UPDATED WITH LOCATION ---
             prompt = f"""
             Write a trust-building ad description (max 500 words).
             Business: {business_name}, Exp: {years_exp} yrs, Team: {team_size}, Jobs: {jobs_completed}.
