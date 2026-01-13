@@ -28,7 +28,7 @@ with col2:
     pricing = st.selectbox("Pricing", ["Fixed Price", "Hourly", "No Hidden Fees"])
     availability = st.text_input("Availability", placeholder="e.g., Next day")
 
-# --- FULL WIDTH INPUTS START HERE ---
+# --- FULL WIDTH INPUTS ---
 locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
 trust_signals = st.text_area("Trust Signals", placeholder="e.g., Insured by AXA, Gas Safe")
 social_proof = st.text_input("Social Proof", placeholder="e.g., 500+ 5-star reviews")
@@ -60,8 +60,11 @@ if st.button("Generate Ad Description"):
             
             with st.spinner('Generating...'):
                 response = model.generate_content(prompt)
+                
+                # --- THE FIX: Remove Markdown Bolding ---
+                clean_text = response.text.replace("**", "").replace("## ", "").strip()
+                
                 st.subheader("Your Ad Copy:")
-                st.text_area("Result", value=response.text, height=300)
+                st.text_area("Result", value=clean_text, height=300)
         except Exception as e:
             st.error(f"Error: {e}")
-
