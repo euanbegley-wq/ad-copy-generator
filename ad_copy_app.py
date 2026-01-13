@@ -144,7 +144,6 @@ trust_signals = st.text_area(
     placeholder="e.g., Insurance (e.g., Public Liability), Certificates (e.g., Gas Safe, DBS Checked), Awards (e.g., Houzz Best of Service, Trustpilot 5-Star)"
 )
 
-# --- RESTORED SOCIAL PROOF ---
 social_proof = st.text_input("Social Proof", placeholder="e.g., 500+ 5-star reviews")
 
 portfolio_link = st.text_input("External Portfolio Link", placeholder="e.g. www.yourwebsite.com/portfolio or Behance link")
@@ -159,36 +158,35 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- PROMPT ---
+            # --- UPDATED PROMPT WITH NEW SYSTEM ROLE AND TONE LOGIC ---
             prompt = f"""
-            Write a trust-building ad description (max 500 words).
-            
-            Business Details:
-            - Name: {business_name}
-            - Category/Industry: {category}
+            System Role:
+            You are an expert ad copywriter for local services. Your goal is to write a high-trust description that converts.
+            CRITICAL RULE: You must write using ONLY the facts provided in the Input Data below. Do not invent names, stats, or verifiers that are not explicitly listed.
+
+            Input Data:
+            - Business Name: {business_name}
+            - Category: {category}
             - Experience: {years_exp} years
             - Team Size: {team_size}
             - Jobs Completed: {jobs_completed}
-            
-            Trust & Logistics:
             - Trust Signals: {trust_signals}
             - Social Proof: {social_proof}
             - Availability: {availability}
             - Locations: {locations}
             - Portfolio Link: {portfolio_link}
+            - Pricing Model: {pricing_model}
+            - Pricing Cost: {pricing_amount}
+
+            Tone Instructions:
+            Adopt the correct tone based strictly on the Category '{category}':
             
-            Pricing:
-            - Model: {pricing_model}
-            - Cost Detail: {pricing_amount}
+            1. IF Category is TRADES (e.g., Plumber, Builder, Electrician): Use a Stoic & Technical tone. Focus on reliability and respect for the home. (e.g., "We work cleanly and efficiently.")
             
-            Guidelines:
-            1. Intro: Establish authority in the {category} industry using experience and job stats.
-            2. Eliminate Risk: Heavily emphasize the specific trust signals provided.
-            3. Social Proof: Mention reviews/ratings ({social_proof}) to build confidence.
-            4. Pricing: State the pricing structure clearly.
-            5. Call to Action: If a portfolio link ({portfolio_link}) is provided, invite users to view past work there.
-            6. Logistics: Mention availability and location coverage.
+            2. IF Category is GIG/LABOR (e.g., Removals, Cleaning, Gardening): Use an Energetic & Capable tone. Focus on speed, strength, and equipment. (e.g., "We get the job done fast.")
             
+            3. IF Category is CARE/PROFESSIONAL (e.g., Tutor, Pet Sitter, Legal, Accounting): Use a Warm & Nurturing tone. Focus on safety, patience, and methodology. (e.g., "Your peace of mind is our priority.")
+
             Output: Ad copy only.
             """
             
