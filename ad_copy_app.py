@@ -158,7 +158,7 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- PROMPT WITH HIERARCHY RULES ---
+            # --- PROMPT ---
             prompt = f"""
             System Role:
             You are a human copywriter. You write in a genuine, trustworthy tone, but you strictly follow the provided data hierarchy.
@@ -177,38 +177,55 @@ if st.button("Generate Ad Description"):
             - Pricing Model: {pricing_model}
             - Pricing Cost: {pricing_amount}
 
-            HIERARCHY & LOGIC RULES (READ CAREFULLY):
+            HIERARCHY & LOGIC RULES:
             1. **CATEGORY IS KING:** The 'Category' field ({category}) is the ABSOLUTE TRUTH about what the business does. 
             2. **IGNORE NAME IMPLICATIONS:** If the 'Business Name' contradicts the 'Category', you must IGNORE the name's meaning. 
                *Example:* If Name is "Sahil's Man & Van" but Category is "Accounting", you MUST write an ad for an ACCOUNTANT named "Sahil's Man & Van". Do NOT write about moving vans.
-            3. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided (e.g. if input says "DBS Checked", do NOT write "Fully Insured").
+            3. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided.
             4. **HONEST PRICING:** Quote pricing exactly as provided.
 
-            STYLE & "ANTI-ROBOT" RULES:
-            1. **NO FLUFF:** Avoid words like "unparalleled," "elevate," "seamless," "tapestry."
-            2. **Sentence Variation:** Mix short, punchy sentences with longer explanations.
-            3. **Conversational Tone:** Use contractions (e.g., "We're", "We'll").
+            TASK:
+            Generate two distinct parts: A Headline and a Description.
 
-            Tone Instructions:
-            1. IF Category is TRADES: Stoic & Technical.
-            2. IF Category is GIG/LABOR: Energetic & Capable.
-            3. IF Category is CARE/PROFESSIONAL: Warm & Nurturing.
+            PART 1: THE HEADLINE (The "Golden Rule")
+            Format: "[Business Name OR Category Name] - [Key Trust Signal]"
+            - **CRITICAL:** The Trust Signal MUST be taken directly from the '{trust_signals}' input. Do not invent one.
+            - If '{trust_signals}' is empty, use a generic fact like "Reliable & Experienced".
+            - Example: "Apex Plumbing - Gas Safe Registered" OR "Smith Cleaning - DBS Checked".
 
-            Structure Requirements (Approx 400 words):
-            1. **The Hook:** Relatable problem or statement of experience in the {category} industry.
-            2. **The "Zero Risk" Promise:** Discuss the Trust Signals ({trust_signals}) using exact terms.
-            3. **The Proof:** Weave in job count and social proof.
-            4. **The Details:** Pricing and Availability.
-            5. **Call to Action:** Portfolio link.
+            PART 2: THE DESCRIPTION (300-400 words)
+            Style: No fluff, conversational, use contractions, mix sentence lengths.
+            Structure: Hook -> Trust -> Proof -> Logistics -> CTA.
 
-            Output: Ad copy only.
+            Output Format:
+            Headline: [Insert Headline Here]
+            Description: [Insert Description Here]
             """
             
             with st.spinner('Generating...'):
                 response = model.generate_content(prompt)
-                clean_text = response.text.replace("**", "").replace("## ", "").strip()
                 
-                st.subheader("Your Ad Copy:")
-                st.text_area("Result", value=clean_text, height=400)
+                # --- PARSE THE OUTPUT TO SEPARATE HEADLINE AND DESCRIPTION ---
+                full_text = response.text.replace("**", "").replace("## ", "")
+                
+                # Default values in case parsing fails
+                headline = "Ad Headline"
+                description = full_text
+                
+                if "Headline:" in full_text and "Description:" in full_text:
+                    parts = full_text.split("Description:")
+                    headline_part = parts[0].replace("Headline:", "").strip()
+                    description_part = parts[1].strip()
+                    
+                    headline = headline_part
+                    description = description_part
+                
+                # --- DISPLAY RESULTS ---
+                st.subheader("Your Ad Headline:")
+                st.text_input("Headline", value=headline, label_visibility="collapsed")
+                
+                st.subheader("Your Ad Body:")
+                st.text_area("Body", value=description, height=400)
+                
         except Exception as e:
             st.error(f"Error: {e}")
