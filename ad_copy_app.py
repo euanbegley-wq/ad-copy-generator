@@ -22,11 +22,27 @@ with col1:
     business_name = st.text_input("Business Name", placeholder="e.g., Apex Plumbing")
     years_exp = st.number_input("Years Experience", value=5)
     team_size = st.number_input("Team Size", value=1)
+    # Moved Availability here to balance the columns better
+    availability = st.text_input("Availability", placeholder="e.g., Next day")
 
 with col2:
     jobs_completed = st.number_input("Jobs Completed", value=100)
-    pricing = st.selectbox("Pricing", ["Fixed Price", "Hourly", "No Hidden Fees"])
-    availability = st.text_input("Availability", placeholder="e.g., Next day")
+    
+    # --- UPDATED PRICING OPTIONS ---
+    pricing_options = [
+        "Fixed Price", 
+        "Hourly Rate", 
+        "Daily Rate", 
+        "Price per Unit/Item", 
+        "Free Quote", 
+        "No Hidden Fees", 
+        "No Call-Out Charge", 
+        "All-Inclusive"
+    ]
+    pricing_model = st.selectbox("Pricing Model", pricing_options)
+    
+    # --- NEW PRICING AMOUNT INPUT ---
+    pricing_amount = st.text_input("Pricing Amount / Detail", placeholder="e.g. £50/hr, from £99, or 'Call for quote'")
 
 # --- FULL WIDTH INPUTS ---
 locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
@@ -41,18 +57,22 @@ if st.button("Generate Ad Description"):
     else:
         try:
             genai.configure(api_key=api_key)
+            # Keeping your requested model version
             model = genai.GenerativeModel('gemini-2.5-flash')
             
+            # --- UPDATED PROMPT TO INCLUDE PRICING AMOUNT ---
             prompt = f"""
             Write a trust-building ad description (max 500 words).
             Business: {business_name}, Exp: {years_exp} yrs, Team: {team_size}, Jobs: {jobs_completed}.
-            Trust Signals: {trust_signals}. Pricing: {pricing}. 
+            Trust Signals: {trust_signals}. 
+            Pricing Structure: {pricing_model}. 
+            Pricing Detail/Cost: {pricing_amount}.
             Availability: {availability}. Locations: {locations}. Social: {social_proof}.
             
             Guidelines:
             1. Intro: State experience/team/jobs.
             2. Eliminate Risk: Use trust signals. If Issuer (e.g. AXA) is listed, name them.
-            3. Pricing: State clearly.
+            3. Pricing: State clearly. Combine the model ({pricing_model}) and the cost ({pricing_amount}) naturally.
             4. Social Proof: Mention it.
             5. Logistics: State availability and explicitly mention that you serve {locations}.
             Output: Ad copy only.
