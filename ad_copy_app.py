@@ -17,12 +17,19 @@ st.title("✍️ Services Trust-Building Ad Copy Generator")
 st.markdown("Generates professional ad copy using **Google Gemini**.")
 st.divider()
 
-# Create two main columns
 col1, col2 = st.columns(2)
 
 # --- LEFT COLUMN ---
 with col1:
-    business_name = st.text_input("Business Name", placeholder="e.g., Apex Plumbing")
+    # UPDATED PLACEHOLDER
+    business_name = st.text_input(
+        "Business Name", 
+        placeholder="Limited Company Name, Brand Name if Sole Trader, or their Name if they are a freelancer/individual."
+    )
+    
+    # NEW FIELD: Category
+    category = st.text_input("Category", placeholder="e.g. Plumbing, Graphic Design, Legal Services")
+    
     years_exp = st.number_input("Years Experience", value=5)
     team_size = st.number_input("Team Size", value=1)
 
@@ -30,7 +37,7 @@ with col1:
 with col2:
     jobs_completed = st.number_input("Jobs Completed", value=100)
     
-    # Nested columns for Pricing to keep them side-by-side
+    # Nested columns for Pricing
     pricing_col1, pricing_col2 = st.columns(2)
     with pricing_col1:
         pricing_options = [
@@ -42,13 +49,22 @@ with col2:
     with pricing_col2:
         pricing_amount = st.text_input("Pricing Amount / Detail", placeholder="e.g. £50/hr")
 
-    # Moved Availability here so it aligns with 'Team Size' in col1
+    # Availability (Kept in right column as per previous layout adjustment)
     availability = st.text_input("Availability", placeholder="e.g., Next day")
 
 # --- FULL WIDTH INPUTS ---
 locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
-trust_signals = st.text_area("Trust Signals", placeholder="e.g., Insured by AXA, Gas Safe")
+
+# UPDATED PLACEHOLDER
+trust_signals = st.text_area(
+    "Trust Signals", 
+    placeholder="e.g., Insurance (e.g., Public Liability), Certificates (e.g., Gas Safe, DBS Checked), Awards (e.g., Houzz Best of Service, Trustpilot 5-Star)"
+)
+
 social_proof = st.text_input("Social Proof", placeholder="e.g., 500+ 5-star reviews")
+
+# NEW FIELD: External Portfolio Link
+portfolio_link = st.text_input("External Portfolio Link", placeholder="e.g. www.yourwebsite.com/portfolio or Behance link")
 
 if st.button("Generate Ad Description"):
     if not has_valid_key:
@@ -60,20 +76,35 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
+            # --- UPDATED PROMPT WITH NEW FIELDS ---
             prompt = f"""
             Write a trust-building ad description (max 500 words).
-            Business: {business_name}, Exp: {years_exp} yrs, Team: {team_size}, Jobs: {jobs_completed}.
-            Trust Signals: {trust_signals}. 
-            Pricing Structure: {pricing_model}. 
-            Pricing Detail/Cost: {pricing_amount}.
-            Availability: {availability}. Locations: {locations}. Social: {social_proof}.
+            
+            Business Details:
+            - Name: {business_name}
+            - Category/Industry: {category}
+            - Experience: {years_exp} years
+            - Team Size: {team_size}
+            - Jobs Completed: {jobs_completed}
+            
+            Trust & Logistics:
+            - Trust Signals: {trust_signals}
+            - Social Proof: {social_proof}
+            - Availability: {availability}
+            - Locations: {locations}
+            - Portfolio Link: {portfolio_link}
+            
+            Pricing:
+            - Model: {pricing_model}
+            - Cost Detail: {pricing_amount}
             
             Guidelines:
-            1. Intro: State experience/team/jobs.
-            2. Eliminate Risk: Use trust signals. If Issuer (e.g. AXA) is listed, name them.
-            3. Pricing: State clearly. Combine the model ({pricing_model}) and the cost ({pricing_amount}) naturally.
-            4. Social Proof: Mention it.
-            5. Logistics: State availability and explicitly mention that you serve {locations}.
+            1. Intro: Establish authority in the {category} industry using experience and job stats.
+            2. Eliminate Risk: Heavily emphasize the specific trust signals provided (Insurance, Certificates, etc).
+            3. Pricing: State the pricing structure clearly.
+            4. Call to Action: If a portfolio link ({portfolio_link}) is provided, invite users to view past work there.
+            5. Logistics: Mention availability and location coverage.
+            
             Output: Ad copy only.
             """
             
