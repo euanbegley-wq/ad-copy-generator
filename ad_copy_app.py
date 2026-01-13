@@ -187,22 +187,23 @@ if st.button("Generate Ad Description"):
 
             PART 1: HEADLINE OPTIONS (The "Golden Rule")
             Generate 3 distinct headlines.
+            **CRITICAL FORMAT RULE:** You MUST use the exact Business Name provided ("{business_name}") as the first part of every headline.
             
-            1. **Option 1 (Trust Focus):** MUST start with "{business_name}". Format: "{business_name} - [Strongest Trust Signal]"
-            2. **Option 2 (Speed/Logistics Focus):** MUST start with "{business_name}". Format: "{business_name} - [Availability or Location]"
-            3. **Option 3 (Authority Focus):** Can start with Category OR Business Name. Format: "[{category} or {business_name}] - [Experience/Jobs Completed]"
+            Format: "{business_name} - [Key Hook]"
             
+            1. **Option 1 (The Trust Hook):** {business_name} - [Strongest Trust Signal]
+            2. **Option 2 (The Speed/Logistics Hook):** {business_name} - [Availability or Location]
+            3. **Option 3 (The Authority Hook):** {business_name} - [Experience or Job Count]
+            
+            *Constraint:* If a specific data point is missing for an option, fallback to the Category Name as the hook (but keep Business Name as the title).
+
             PART 2: THE DESCRIPTION (300-400 words)
             Tone Instructions:
             - IF Category is TRADES: Stoic & Technical.
             - IF Category is GIG/LABOR: Energetic & Capable.
             - IF Category is CARE/PROFESSIONAL: Warm & Nurturing.
 
-            Style & "Anti-Robot" Rules:
-            - **No Fluff:** Do not use words like "unparalleled," "elevate," "seamless," "tapestry."
-            - **Conversational:** Use contractions (e.g., "We're", "We'll").
-            - **Strict Fact-Check:** Only mention trust signals/certs that are explicitly listed in Input Data.
-
+            Style: No fluff, conversational, use contractions, mix sentence lengths.
             Structure: Hook -> Trust -> Proof -> Logistics -> CTA.
 
             Output Format:
