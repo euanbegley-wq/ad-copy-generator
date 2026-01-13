@@ -158,10 +158,10 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- UPDATED PROMPT WITH NEW SYSTEM ROLE AND TONE LOGIC ---
+            # --- UPDATED PROMPT WITH WORD COUNT ENFORCEMENT ---
             prompt = f"""
             System Role:
-            You are an expert ad copywriter for local services. Your goal is to write a high-trust description that converts.
+            You are an expert ad copywriter for local services. Your goal is to write a high-trust, detailed description (300-500 words) that converts.
             CRITICAL RULE: You must write using ONLY the facts provided in the Input Data below. Do not invent names, stats, or verifiers that are not explicitly listed.
 
             Input Data:
@@ -180,14 +180,20 @@ if st.button("Generate Ad Description"):
 
             Tone Instructions:
             Adopt the correct tone based strictly on the Category '{category}':
-            
-            1. IF Category is TRADES (e.g., Plumber, Builder, Electrician): Use a Stoic & Technical tone. Focus on reliability and respect for the home. (e.g., "We work cleanly and efficiently.")
-            
-            2. IF Category is GIG/LABOR (e.g., Removals, Cleaning, Gardening): Use an Energetic & Capable tone. Focus on speed, strength, and equipment. (e.g., "We get the job done fast.")
-            
-            3. IF Category is CARE/PROFESSIONAL (e.g., Tutor, Pet Sitter, Legal, Accounting): Use a Warm & Nurturing tone. Focus on safety, patience, and methodology. (e.g., "Your peace of mind is our priority.")
+            1. IF Category is TRADES: Use a Stoic & Technical tone. Focus on reliability and respect.
+            2. IF Category is GIG/LABOR: Use an Energetic & Capable tone. Focus on speed and strength.
+            3. IF Category is CARE/PROFESSIONAL: Use a Warm & Nurturing tone. Focus on safety and patience.
 
-            Output: Ad copy only.
+            Structure & Length Instructions:
+            **IMPORTANT: The output must be between 300 and 500 words.** To achieve this length, you must elaborate on each point:
+            
+            1. **The Hook (75 words):** Don't just list experience. Explain *why* {years_exp} years and {jobs_completed} jobs makes {business_name} the superior choice in {category}.
+            2. **The "Zero Risk" Promise (100+ words):** Dedicate a substantial paragraph to the Trust Signals. Explain exactly what {trust_signals} means for the customer's peace of mind. If they have insurance or certificates, explain why that matters.
+            3. **Service & Capability (75 words):** Describe the team and availability ({availability}) in detail. Mention the locations ({locations}) and how you serve them.
+            4. **Pricing & Proof (75 words):** Explain the pricing structure ({pricing_model} - {pricing_amount}) clearly and transparently. Mention the social proof ({social_proof}) as evidence of quality.
+            5. **Call to Action:** Clear next step.
+
+            Output: Ad copy only. Do not output the word count number.
             """
             
             with st.spinner('Generating...'):
@@ -195,6 +201,6 @@ if st.button("Generate Ad Description"):
                 clean_text = response.text.replace("**", "").replace("## ", "").strip()
                 
                 st.subheader("Your Ad Copy:")
-                st.text_area("Result", value=clean_text, height=300)
+                st.text_area("Result", value=clean_text, height=400) # Increased height for longer text
         except Exception as e:
             st.error(f"Error: {e}")
