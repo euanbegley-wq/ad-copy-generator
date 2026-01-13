@@ -158,10 +158,10 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- UPDATED PROMPT WITH STRICT FACTUALITY RULES ---
+            # --- PROMPT WITH HIERARCHY RULES ---
             prompt = f"""
             System Role:
-            You are a human copywriter. You write in a genuine, trustworthy tone, BUT you act like a lawyer when it comes to facts.
+            You are a human copywriter. You write in a genuine, trustworthy tone, but you strictly follow the provided data hierarchy.
             
             Input Data:
             - Business Name: {business_name}
@@ -177,10 +177,12 @@ if st.button("Generate Ad Description"):
             - Pricing Model: {pricing_model}
             - Pricing Cost: {pricing_amount}
 
-            CRITICAL FACTUAL ACCURACY RULES:
-            1. **DO NOT GENERALIZE INSURANCE OR CERTS:** If the user writes "DBS Checked," do NOT write "Fully Insured." If they write "Public Liability," do NOT write "All risks covered." You must use the EXACT terms provided in the '{trust_signals}' field. 
-            2. **NO INVENTED CLAIMS:** Do not add guarantees, warranties, or accreditations that are not explicitly listed in the input.
-            3. **HONEST PRICING:** Quote the pricing exactly as provided ({pricing_model}: {pricing_amount}).
+            HIERARCHY & LOGIC RULES (READ CAREFULLY):
+            1. **CATEGORY IS KING:** The 'Category' field ({category}) is the ABSOLUTE TRUTH about what the business does. 
+            2. **IGNORE NAME IMPLICATIONS:** If the 'Business Name' contradicts the 'Category', you must IGNORE the name's meaning. 
+               *Example:* If Name is "Sahil's Man & Van" but Category is "Accounting", you MUST write an ad for an ACCOUNTANT named "Sahil's Man & Van". Do NOT write about moving vans.
+            3. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided (e.g. if input says "DBS Checked", do NOT write "Fully Insured").
+            4. **HONEST PRICING:** Quote pricing exactly as provided.
 
             STYLE & "ANTI-ROBOT" RULES:
             1. **NO FLUFF:** Avoid words like "unparalleled," "elevate," "seamless," "tapestry."
@@ -193,8 +195,8 @@ if st.button("Generate Ad Description"):
             3. IF Category is CARE/PROFESSIONAL: Warm & Nurturing.
 
             Structure Requirements (Approx 400 words):
-            1. **The Hook:** Relatable problem or statement of experience.
-            2. **The "Zero Risk" Promise:** Discuss the Trust Signals ({trust_signals}). **Strictly adhere to the Critical Factual Accuracy Rules here.**
+            1. **The Hook:** Relatable problem or statement of experience in the {category} industry.
+            2. **The "Zero Risk" Promise:** Discuss the Trust Signals ({trust_signals}) using exact terms.
             3. **The Proof:** Weave in job count and social proof.
             4. **The Details:** Pricing and Availability.
             5. **Call to Action:** Portfolio link.
