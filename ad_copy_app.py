@@ -178,51 +178,55 @@ if st.button("Generate Ad Description"):
             - Pricing Cost: {pricing_amount}
 
             HIERARCHY & LOGIC RULES:
-            1. **CATEGORY IS KING:** The 'Category' field ({category}) is the ABSOLUTE TRUTH about what the business does. 
-            2. **IGNORE NAME IMPLICATIONS:** If the 'Business Name' contradicts the 'Category', you must IGNORE the name's meaning. 
-               *Example:* If Name is "Sahil's Man & Van" but Category is "Accounting", you MUST write an ad for an ACCOUNTANT named "Sahil's Man & Van". Do NOT write about moving vans.
-            3. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided.
-            4. **HONEST PRICING:** Quote pricing exactly as provided.
+            1. **CATEGORY IS KING:** The 'Category' field ({category}) is the ABSOLUTE TRUTH. If the Business Name contradicts the Category, ignore the name's implications.
+            2. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided (e.g. if "DBS Checked", use "DBS Checked", NOT "Fully Insured").
+            3. **HONEST PRICING:** Quote pricing exactly as provided.
 
             TASK:
-            Generate two distinct parts: A Headline and a Description.
+            Generate two distinct parts: 3 Headline Options and 1 Ad Description.
 
-            PART 1: THE HEADLINE (The "Golden Rule")
-            Format: "[Business Name OR Category Name] - [Key Trust Signal]"
-            - **CRITICAL:** The Trust Signal MUST be taken directly from the '{trust_signals}' input. Do not invent one.
-            - If '{trust_signals}' is empty, use a generic fact like "Reliable & Experienced".
-            - Example: "Apex Plumbing - Gas Safe Registered" OR "Smith Cleaning - DBS Checked".
+            PART 1: HEADLINE OPTIONS (The "Golden Rule")
+            Generate 3 distinct headlines based on the format: "[Business/Category] - [Key Hook]"
+            
+            1. **Option 1 (The Trust Hook):** Use the strongest Trust Signal provided (e.g. "Gas Safe").
+            2. **Option 2 (The Speed/Logistics Hook):** Use Availability or Location (e.g. "Same Day Service" or "Serving London").
+            3. **Option 3 (The Authority Hook):** Use Experience or Job Count (e.g. "100+ Jobs Completed" or "5 Years Exp").
+            
+            *Constraint:* If a specific data point is missing for an option, fallback to the Category Name.
 
             PART 2: THE DESCRIPTION (300-400 words)
             Style: No fluff, conversational, use contractions, mix sentence lengths.
             Structure: Hook -> Trust -> Proof -> Logistics -> CTA.
 
             Output Format:
-            Headline: [Insert Headline Here]
-            Description: [Insert Description Here]
+            Headlines:
+            1. [Option 1]
+            2. [Option 2]
+            3. [Option 3]
+            
+            Description:
+            [Insert Description Here]
             """
             
             with st.spinner('Generating...'):
                 response = model.generate_content(prompt)
                 
-                # --- PARSE THE OUTPUT TO SEPARATE HEADLINE AND DESCRIPTION ---
+                # --- PARSE THE OUTPUT ---
                 full_text = response.text.replace("**", "").replace("## ", "")
                 
-                # Default values in case parsing fails
-                headline = "Ad Headline"
+                headlines = "Option 1..."
                 description = full_text
                 
-                if "Headline:" in full_text and "Description:" in full_text:
+                if "Headlines:" in full_text and "Description:" in full_text:
                     parts = full_text.split("Description:")
-                    headline_part = parts[0].replace("Headline:", "").strip()
+                    headlines_part = parts[0].replace("Headlines:", "").strip()
                     description_part = parts[1].strip()
-                    
-                    headline = headline_part
+                    headlines = headlines_part
                     description = description_part
                 
                 # --- DISPLAY RESULTS ---
-                st.subheader("Your Ad Headline:")
-                st.text_input("Headline", value=headline, label_visibility="collapsed")
+                st.subheader("Headline Options (Pick one):")
+                st.text_area("Headlines", value=headlines, height=100)
                 
                 st.subheader("Your Ad Body:")
                 st.text_area("Body", value=description, height=400)
