@@ -158,10 +158,10 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- PROMPT WITH "HUMANIZER" INSTRUCTIONS ---
+            # --- UPDATED PROMPT WITH STRICT FACTUALITY RULES ---
             prompt = f"""
             System Role:
-            You are a human copywriter, not an AI. You are writing a genuine, trustworthy service description (approx 400 words).
+            You are a human copywriter. You write in a genuine, trustworthy tone, BUT you act like a lawyer when it comes to facts.
             
             Input Data:
             - Business Name: {business_name}
@@ -177,23 +177,27 @@ if st.button("Generate Ad Description"):
             - Pricing Model: {pricing_model}
             - Pricing Cost: {pricing_amount}
 
+            CRITICAL FACTUAL ACCURACY RULES:
+            1. **DO NOT GENERALIZE INSURANCE OR CERTS:** If the user writes "DBS Checked," do NOT write "Fully Insured." If they write "Public Liability," do NOT write "All risks covered." You must use the EXACT terms provided in the '{trust_signals}' field. 
+            2. **NO INVENTED CLAIMS:** Do not add guarantees, warranties, or accreditations that are not explicitly listed in the input.
+            3. **HONEST PRICING:** Quote the pricing exactly as provided ({pricing_model}: {pricing_amount}).
+
             STYLE & "ANTI-ROBOT" RULES:
-            1. **NO FLUFF:** Do not use words like "unparalleled," "elevate," "unleash," "realm," "tapestry," "seamless," or "game-changer."
-            2. **Sentence Variation:** Do not start every sentence with "We." Mix short, punchy sentences with longer explanations.
-            3. **Be Specific, Not Vague:** Instead of saying "We provide high quality service," say "We don't leave until the job is done right."
-            4. **Conversational Tone:** Write as if you are speaking directly to the homeowner/client. Use contractions (e.g., "We're" instead of "We are").
+            1. **NO FLUFF:** Avoid words like "unparalleled," "elevate," "seamless," "tapestry."
+            2. **Sentence Variation:** Mix short, punchy sentences with longer explanations.
+            3. **Conversational Tone:** Use contractions (e.g., "We're", "We'll").
 
-            Tone Instructions (Based on Category '{category}'):
-            1. IF Category is TRADES: Use a straightforward, "no-nonsense" tone. Focus on respect for the property.
-            2. IF Category is GIG/LABOR: Use an energetic tone. Focus on getting the hard work done so the client doesn't have to.
-            3. IF Category is CARE/PROFESSIONAL: Use a calm, reassuring tone.
+            Tone Instructions:
+            1. IF Category is TRADES: Stoic & Technical.
+            2. IF Category is GIG/LABOR: Energetic & Capable.
+            3. IF Category is CARE/PROFESSIONAL: Warm & Nurturing.
 
-            Structure Requirements:
-            1. **The Hook:** Open with a relatable problem or a strong statement about experience ({years_exp} years).
-            2. **The "Why Us":** Deep dive into the Trust Signals ({trust_signals}). Explain specifically why these make {business_name} safe to hire.
-            3. **The Proof:** Weave in the job count ({jobs_completed}) and social proof ({social_proof}) naturally, not as a bullet point list.
-            4. **The Details:** Clearly explain the pricing ({pricing_model}: {pricing_amount}) and availability ({availability}) so the customer knows exactly what to expect.
-            5. **Call to Action:** Direct them to the portfolio ({portfolio_link}) if available.
+            Structure Requirements (Approx 400 words):
+            1. **The Hook:** Relatable problem or statement of experience.
+            2. **The "Zero Risk" Promise:** Discuss the Trust Signals ({trust_signals}). **Strictly adhere to the Critical Factual Accuracy Rules here.**
+            3. **The Proof:** Weave in job count and social proof.
+            4. **The Details:** Pricing and Availability.
+            5. **Call to Action:** Portfolio link.
 
             Output: Ad copy only.
             """
