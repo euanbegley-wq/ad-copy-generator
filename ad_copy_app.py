@@ -40,7 +40,7 @@ if st.button("Generate Ad Description"):
     else:
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash-001')
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
             
             prompt = f"""
             Write a trust-building ad description (max 500 words).
@@ -62,6 +62,7 @@ if st.button("Generate Ad Description"):
                 st.text_area("Result", value=response.text, height=300)
         except Exception as e:
             st.error(f"Error: {e}")
+
 
 
 
