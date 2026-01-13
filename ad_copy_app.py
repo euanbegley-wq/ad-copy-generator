@@ -158,12 +158,11 @@ if st.button("Generate Ad Description"):
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # --- UPDATED PROMPT WITH WORD COUNT ENFORCEMENT ---
+            # --- PROMPT WITH "HUMANIZER" INSTRUCTIONS ---
             prompt = f"""
             System Role:
-            You are an expert ad copywriter for local services. Your goal is to write a high-trust, detailed description (300-500 words) that converts.
-            CRITICAL RULE: You must write using ONLY the facts provided in the Input Data below. Do not invent names, stats, or verifiers that are not explicitly listed.
-
+            You are a human copywriter, not an AI. You are writing a genuine, trustworthy service description (approx 400 words).
+            
             Input Data:
             - Business Name: {business_name}
             - Category: {category}
@@ -178,22 +177,25 @@ if st.button("Generate Ad Description"):
             - Pricing Model: {pricing_model}
             - Pricing Cost: {pricing_amount}
 
-            Tone Instructions:
-            Adopt the correct tone based strictly on the Category '{category}':
-            1. IF Category is TRADES: Use a Stoic & Technical tone. Focus on reliability and respect.
-            2. IF Category is GIG/LABOR: Use an Energetic & Capable tone. Focus on speed and strength.
-            3. IF Category is CARE/PROFESSIONAL: Use a Warm & Nurturing tone. Focus on safety and patience.
+            STYLE & "ANTI-ROBOT" RULES:
+            1. **NO FLUFF:** Do not use words like "unparalleled," "elevate," "unleash," "realm," "tapestry," "seamless," or "game-changer."
+            2. **Sentence Variation:** Do not start every sentence with "We." Mix short, punchy sentences with longer explanations.
+            3. **Be Specific, Not Vague:** Instead of saying "We provide high quality service," say "We don't leave until the job is done right."
+            4. **Conversational Tone:** Write as if you are speaking directly to the homeowner/client. Use contractions (e.g., "We're" instead of "We are").
 
-            Structure & Length Instructions:
-            **IMPORTANT: The output must be between 300 and 500 words.** To achieve this length, you must elaborate on each point:
-            
-            1. **The Hook (75 words):** Don't just list experience. Explain *why* {years_exp} years and {jobs_completed} jobs makes {business_name} the superior choice in {category}.
-            2. **The "Zero Risk" Promise (100+ words):** Dedicate a substantial paragraph to the Trust Signals. Explain exactly what {trust_signals} means for the customer's peace of mind. If they have insurance or certificates, explain why that matters.
-            3. **Service & Capability (75 words):** Describe the team and availability ({availability}) in detail. Mention the locations ({locations}) and how you serve them.
-            4. **Pricing & Proof (75 words):** Explain the pricing structure ({pricing_model} - {pricing_amount}) clearly and transparently. Mention the social proof ({social_proof}) as evidence of quality.
-            5. **Call to Action:** Clear next step.
+            Tone Instructions (Based on Category '{category}'):
+            1. IF Category is TRADES: Use a straightforward, "no-nonsense" tone. Focus on respect for the property.
+            2. IF Category is GIG/LABOR: Use an energetic tone. Focus on getting the hard work done so the client doesn't have to.
+            3. IF Category is CARE/PROFESSIONAL: Use a calm, reassuring tone.
 
-            Output: Ad copy only. Do not output the word count number.
+            Structure Requirements:
+            1. **The Hook:** Open with a relatable problem or a strong statement about experience ({years_exp} years).
+            2. **The "Why Us":** Deep dive into the Trust Signals ({trust_signals}). Explain specifically why these make {business_name} safe to hire.
+            3. **The Proof:** Weave in the job count ({jobs_completed}) and social proof ({social_proof}) naturally, not as a bullet point list.
+            4. **The Details:** Clearly explain the pricing ({pricing_model}: {pricing_amount}) and availability ({availability}) so the customer knows exactly what to expect.
+            5. **Call to Action:** Direct them to the portfolio ({portfolio_link}) if available.
+
+            Output: Ad copy only.
             """
             
             with st.spinner('Generating...'):
@@ -201,6 +203,6 @@ if st.button("Generate Ad Description"):
                 clean_text = response.text.replace("**", "").replace("## ", "").strip()
                 
                 st.subheader("Your Ad Copy:")
-                st.text_area("Result", value=clean_text, height=400) # Increased height for longer text
+                st.text_area("Result", value=clean_text, height=400)
         except Exception as e:
             st.error(f"Error: {e}")
