@@ -1,235 +1,288 @@
-import streamlit as st
-import google.generativeai as genai
+import React, { useState } from 'react';
+import { CheckCircle, AlertCircle, Copy, Loader2, Sparkles, MoveRight, PenTool } from 'lucide-react';
+import { AdFormData, GeneratedAdContent } from './types';
+import { CATEGORIES, PRICING_OPTIONS } from './constants';
+import { generateAdCopy } from './services/geminiService';
+import Input from './components/Input';
+import SearchableSelect from './components/SearchableSelect';
+import TextArea from './components/TextArea';
+import CounterInput from './components/CounterInput';
 
-st.set_page_config(page_title="Ad Copy Generator", page_icon="✍️")
+const App: React.FC = () => {
+  const [formData, setFormData] = useState<AdFormData>({
+    businessName: '',
+    category: CATEGORIES[0],
+    teamSize: 1,
+    yearsExperience: 5,
+    jobsCompleted: 100,
+    pricingModel: PRICING_OPTIONS[0],
+    pricingAmount: '',
+    availability: '',
+    locations: '',
+    trustSignals: '',
+    socialProof: '',
+    portfolioLink: '',
+  });
 
-# --- Logic to handle API Key ---
-if "GOOGLE_API_KEY" in st.secrets:
-    api_key = st.secrets["GOOGLE_API_KEY"]
-    has_valid_key = True
-else:
-    st.sidebar.header("Configuration")
-    api_key = st.sidebar.text_input("Enter Google API Key", type="password")
-    has_valid_key = bool(api_key)
+  const [result, setResult] = useState<GeneratedAdContent | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-# --- Main App UI ---
-st.title("✍️ Services Trust-Building Ad Copy Generator")
-st.markdown("Generates professional ad copy using **Google Gemini**.")
-st.divider()
+  const handleChange = (e: { target: { id: string; value: string | number } }) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
-# --- CATEGORY DATA ---
-categories = sorted([
-    "Academic", "Accessories", "Accountants", "Accounting", "Acupuncture", 
-    "Advertising Agencies", "Airconditioning & Heating", "Alternative Therapies", 
-    "Appliance Repair", "Architect", "Aromatherapy", "Arts & Crafts", 
-    "Asbestos Removal", "Astrology & Psychics", "Au pairs", "Baby Classes & Groups", 
-    "Babysitting", "Bakery", "Bands & Musicians", "Barbers Shops", "Bars & Pubs", 
-    "Bathroom Fitters", "Beauty Treatments", "Bedroom Fitters", "Bike Shops", 
-    "Blacksmiths", "Body Repair", "Bookkeeping", "Bricklayers", "Builders", 
-    "Bus & Coach", "Business", "Cafes", "Cake Makers", "Car Breakers", 
-    "Car Servicing & Repair", "Car Valeting", "Car Wash", "Caravan Hire", 
-    "Carpentry & Joiners", "Carpet Cleaning", "Carpet Fitters", "Cars & Transportation", 
-    "Catering", "Catering & Services", "Central Heating", "Chauffeur & Limousine Hire", 
-    "Cheap Loans", "Childcare Agencies", "Childminders", "Children's Activities", 
-    "Chimney Sweeps", "Chinese", "Chiropodists & Podiatrists", "Clarinet Tuition", 
-    "Clothes Stores", "Coach Hire", "Commercial & Office Cleaning", 
-    "Commercial Property Agents", "Complementary Therapies", "Computer Network", 
-    "Computer Repair", "Computer Services", "Computer Support", "Construction", 
-    "Cookery Classes", "Copywriting", "Counselling", "Courier Services", 
-    "Creative Writing", "Curtain & Upholstery Cleaning", "Czech", "DJ & Disco Hire", 
-    "Damp Proofing", "Dance Classes", "Dating", "Deep Tissue Massage", "Dentists", 
-    "Doctors & Clinics", "Domestic Cleaning", "Door", "Drain & Pipe Cleaning", 
-    "Drama Schools", "Dress & Suit Hire", "Driving Lessons & Instructors", 
-    "Drum Tuition", "Dry Cleaning & Laundry", "Dutch", "Electrical", "Electricians", 
-    "Embroidery", "English", "Entertainers", "Entrance exams", "Estate Agents", 
-    "Europe", "Event", "External cleaning", "Eye Treatments", "Facials", 
-    "Fashion Designers", "Fencing Contractors", "Financial Advice", 
-    "Flatpack Furniture Assemblers", "Floor Tilers", "Florists", "Footwear", 
-    "French", "Function Rooms & Banqueting Facilities", "Funeral Directors", 
-    "Garage & Mechanic Services", "Garage Doors", "Gardening & Landscaping", 
-    "General Office Services", "German", "Glaziers", "Goods Suppliers & Retailers", 
-    "Grooming", "Groundworkers", "Guitar Tuition", "Gutter Cleaning", 
-    "Gutter install & repair", "Hair Extensions & Wig Services", "Hairdressers", 
-    "Hairdressing", "Handymen", "Health & Fitness", "Health & Safety", 
-    "Health Clubs & Fitness Centers", "Health Products", "Hen & Stag Planners", 
-    "Homeopathy", "Honeymoons", "Hostel & Hotels", "Housekeepers", "Hypnotherapy", 
-    "IT & Computing", "Insolvency Practitioners", "Insulation", "Insurance", 
-    "Interior Designers", "Interpreting & Translation", "Italian", "Japanese", 
-    "Jewellers", "Kitchen Fitters", "Laminate Fitters", "Language", 
-    "Leaflet Distribution", "Legal Services", "Letting Agents", "Life Coaching", 
-    "Lighting Specialists", "Locksmiths", "Loft Conversion Specialists", 
-    "MOT Testing", "Make Up Artists", "Marquee Hire", "Market Research", 
-    "Marketing", "Martial Arts Clubs & Schools", "Maths", "Mobile Beauty Therapists", 
-    "Mobile Hairdressers", "Mobile Phone", "Models & Actors", "Money Transfer", 
-    "Mortgage Brokers", "Motoring", "Music", "Nail Services/Technicians/Manicures", 
-    "Nannies", "Nursery Schools", "Nursing & Care", "Office Furniture", 
-    "Online Content Providers", "Opticians", "Organisers & Planners", 
-    "Other Accountanting", "Other Alternative Therapies", "Other Beauty Treatments", 
-    "Other Business & Office Services", "Other Children Services", "Other Classes", 
-    "Other Cleaning", "Other Computer Services", "Other Entertainment Services", 
-    "Other Fitness Services", "Other Flooring", "Other Food & Drink", 
-    "Other Goods Suppliers & Retailers", "Other Health & Beauty Services", 
-    "Other Language Lessons", "Other Massage Therapies", "Other Motoring Services", 
-    "Other Music Tuition", "Other Pet Services", "Other Property & Maintenance Services", 
-    "Other Wedding Services", "Overseas Business", "Overseas Property", 
-    "Overseas Removals", "Painting & Decorating", "Parent Support", 
-    "Paving & Driveway", "Payroll", "Pedicures", "Personal Trainers", 
-    "Pest & Vermin Control", "Petsitters & Dogwalkers", "Phone & Tablet Repair", 
-    "Photographers & Videographers", "Photography & Film", "Physics", 
-    "Piano Tuition", "Pilates Courses", "Plasterers", "Plumbing", "Polish", 
-    "Pregnancy & Child Birth", "Printing", "Proof Reading", "Property", 
-    "Property Consultants", "Property Maintenance Services", "Psychotherapy", 
-    "Recruitment", "Reflexology", "Reiki Healing", "Removal Services", 
-    "Rest of World", "Restaurants", "Roofing", "Russian", "Satellite, Aerial & TV", 
-    "Saxophone Tuition", "Scaffolding", "Science", "Seamstress/Tailors", 
-    "Secretarial Services", "Security Services", "Self Defence", "Shiatsu Massage", 
-    "Shipping", "Shopfitters", "Shredding Services", "Sign Makers", 
-    "Singing Lessons", "Skip Hire", "Sofa", "Software Application Development", 
-    "Solicitors & Conveyancing", "Spanish", "Speech Writing", "Sports Massage", 
-    "Stonemasons", "Storage", "Structural Engineers", "Stylists", "Supermarkets", 
-    "Supplies", "Surveyors", "Swedish Massage", "TV Repairs", "Takeaways", 
-    "Tanning", "Tattooing & Piercing", "Tax", "Taxi", 
-    "Telecom & Internet Service Providers", "Thai Massage", "Tilers", "Training", 
-    "Travel Agents", "Tree Surgeons", "Tyre Fitting", "UK & Ireland", "Upholsterers", 
-    "Van & Truck Hire", "Vehicle Hire", "Vehicle Recovery Services", 
-    "Venues & Nightclubs", "Vets", "Violin Tuition", "Visa & Immigration", 
-    "Waxing Treatments", "Web Development", "Web Services", "Website Design", 
-    "Wedding & Reception Venues", "Weddings", "Weddings Abroad", "Wholesale", 
-    "Window Blinds, Shutters & Curtains", "Window Cleaning", "Windows & Doors", 
-    "Windshield Repair", "Wood Flooring", "Writing & Literature", "Yoga Classes", 
-    "Yoga Therapy"
-])
+  const handleSubmit = async () => {
+    if (!formData.businessName) {
+      setError('Please enter a Business Name.');
+      return;
+    }
 
-col1, col2 = st.columns(2)
+    setLoading(true);
+    setError(null);
+    setResult(null);
 
-# --- LEFT COLUMN ---
-with col1:
-    business_name = st.text_input(
-        "Business Name", 
-        placeholder="Limited Company Name, Brand Name if Sole Trader, or their Name if they are a freelancer/individual."
-    )
-    
-    # Nested columns for Category and Team Size
-    cat_col, team_col = st.columns(2)
-    with cat_col:
-        category = st.selectbox("Category", options=categories)
-    with team_col:
-        team_size = st.number_input("Team Size", value=1)
+    try {
+      const generatedContent = await generateAdCopy(formData);
+      setResult(generatedContent);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while generating content.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0b0c15] text-slate-200 selection:bg-indigo-500/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         
-    years_exp = st.number_input("Years Experience", value=5)
+        {/* Header Section */}
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-4xl">✍️</span>
+            <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+              Services Trust-Building Ad Copy Generator
+            </h1>
+          </div>
+          <p className="text-lg text-slate-400 max-w-2xl">
+            Generates professional ad copy using <span className="font-semibold text-white">Google Gemini</span>.
+          </p>
+          <div className="h-px w-full bg-slate-800 mt-8" />
+        </div>
 
-# --- RIGHT COLUMN ---
-with col2:
-    jobs_completed = st.number_input("Jobs Completed", value=100)
-    
-    # Nested columns for Pricing
-    pricing_col1, pricing_col2 = st.columns(2)
-    with pricing_col1:
-        pricing_options = [
-            "Fixed Price", "Hourly Rate", "Daily Rate", "Price per Unit/Item", 
-            "Free Quote", "No Hidden Fees", "No Call-Out Charge", "All-Inclusive"
-        ]
-        pricing_model = st.selectbox("Pricing Model", pricing_options)
-        
-    with pricing_col2:
-        pricing_amount = st.text_input("Pricing Amount / Detail", placeholder="e.g. £50/hr")
-
-    availability = st.text_input("Availability", placeholder="e.g., Next day")
-
-# --- FULL WIDTH INPUTS ---
-locations = st.text_input("Locations Covered", placeholder="e.g. London, M25, Greater Manchester, and surrounding areas")
-
-trust_signals = st.text_area(
-    "Trust Signals", 
-    placeholder="e.g., Insurance (e.g., Public Liability), Certificates (e.g., Gas Safe, DBS Checked), Awards (e.g., Houzz Best of Service, Trustpilot 5-Star)"
-)
-
-social_proof = st.text_input("Social Proof", placeholder="e.g., 500+ 5-star reviews")
-
-portfolio_link = st.text_input("External Portfolio Link", placeholder="e.g. www.yourwebsite.com/portfolio or Behance link")
-
-if st.button("Generate Ad Description"):
-    if not has_valid_key:
-        st.error("No API Key found. Please configure secrets or enter a key.")
-    elif not business_name:
-        st.warning("Please enter a Business Name.")
-    else:
-        try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* Form Section - Takes up 7 columns */}
+          <div className="lg:col-span-7 space-y-8">
             
-            # --- PROMPT ---
-            prompt = f"""
-            System Role:
-            You are a human copywriter. You write in a genuine, trustworthy tone, but you strictly follow the provided data hierarchy.
-            
-            Input Data:
-            - Business Name: {business_name}
-            - Category: {category}
-            - Experience: {years_exp} years
-            - Team Size: {team_size}
-            - Jobs Completed: {jobs_completed}
-            - Trust Signals: {trust_signals}
-            - Social Proof: {social_proof}
-            - Availability: {availability}
-            - Locations: {locations}
-            - Portfolio Link: {portfolio_link}
-            - Pricing Model: {pricing_model}
-            - Pricing Cost: {pricing_amount}
+            {/* Business Info Group */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                id="businessName"
+                label="Business Name"
+                placeholder="e.g. Sahil's man and van company"
+                value={formData.businessName}
+                onChange={handleChange}
+              />
+              <CounterInput
+                id="jobsCompleted"
+                label="Jobs Completed"
+                value={formData.jobsCompleted}
+                onChange={handleChange}
+              />
+            </div>
 
-            HIERARCHY & LOGIC RULES:
-            1. **CATEGORY IS KING:** The 'Category' field ({category}) is the ABSOLUTE TRUTH. If the Business Name contradicts the Category, ignore the name's implications.
-            2. **CRITICAL FACTUAL ACCURACY:** Do not generalize trust signals. Use exact terms provided (e.g. if "DBS Checked", use "DBS Checked", NOT "Fully Insured").
-            3. **HONEST PRICING:** Quote pricing exactly as provided.
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SearchableSelect
+                id="category"
+                label="Category"
+                options={CATEGORIES}
+                value={formData.category}
+                onChange={handleChange}
+                placeholder="Select category..."
+              />
+              <CounterInput
+                id="teamSize"
+                label="Team Size"
+                min={1}
+                value={formData.teamSize}
+                onChange={handleChange}
+              />
+            </div>
 
-            TASK:
-            Generate two distinct parts: 3 Headline Options and 1 Ad Description.
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SearchableSelect
+                id="pricingModel"
+                label="Pricing Model"
+                options={PRICING_OPTIONS}
+                value={formData.pricingModel}
+                onChange={handleChange}
+                placeholder="Select model..."
+              />
+               <Input
+                id="pricingAmount"
+                label="Pricing Amount / Detail"
+                placeholder="e.g. £50/hr"
+                value={formData.pricingAmount}
+                onChange={handleChange}
+              />
+            </div>
 
-            PART 1: HEADLINE OPTIONS (The "Golden Rule")
-            Generate 3 distinct headlines based on the format: "[Business/Category] - [Key Hook]"
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Using Input for availability but styling it to match */}
+               <Input
+                id="availability"
+                label="Availability"
+                placeholder="e.g. Next day"
+                value={formData.availability}
+                onChange={handleChange}
+              />
+               <Input
+                id="locations"
+                label="Locations Covered"
+                placeholder="e.g. London, M25, Greater Manchester, and surrounding areas"
+                value={formData.locations}
+                onChange={handleChange}
+              />
+            </div>
             
-            1. **Option 1 (The Trust Hook):** Use the strongest Trust Signal provided (e.g. "Gas Safe").
-            2. **Option 2 (The Speed/Logistics Hook):** Use Availability or Location (e.g. "Same Day Service" or "Serving London").
-            3. **Option 3 (The Authority Hook):** Use Experience or Job Count (e.g. "100+ Jobs Completed" or "5 Years Exp").
-            
-            *Constraint:* If a specific data point is missing for an option, fallback to the Category Name.
+            {/* Long Text Areas */}
+            <TextArea
+              id="trustSignals"
+              label="Trust Signals"
+              placeholder="e.g., Insurance (e.g., Public Liability), Certificates (e.g., Gas Safe, DBS Checked), Awards (e.g., Houzz Best of Service, Trustpilot 5-Star)"
+              value={formData.trustSignals}
+              onChange={handleChange}
+              rows={3}
+              className="bg-slate-800/50"
+            />
 
-            PART 2: THE DESCRIPTION (300-400 words)
-            Style: No fluff, conversational, use contractions, mix sentence lengths.
-            Structure: Hook -> Trust -> Proof -> Logistics -> CTA.
+            <Input
+              id="socialProof"
+              label="Social Proof"
+              placeholder="e.g. 500+ 5-star reviews"
+              value={formData.socialProof}
+              onChange={handleChange}
+            />
 
-            Output Format:
-            Headlines:
-            1. [Option 1]
-            2. [Option 2]
-            3. [Option 3]
-            
-            Description:
-            [Insert Description Here]
-            """
-            
-            with st.spinner('Generating...'):
-                response = model.generate_content(prompt)
-                
-                # --- PARSE THE OUTPUT ---
-                full_text = response.text.replace("**", "").replace("## ", "")
-                
-                headlines = "Option 1..."
-                description = full_text
-                
-                if "Headlines:" in full_text and "Description:" in full_text:
-                    parts = full_text.split("Description:")
-                    headlines_part = parts[0].replace("Headlines:", "").strip()
-                    description_part = parts[1].strip()
-                    headlines = headlines_part
-                    description = description_part
-                
-                # --- DISPLAY RESULTS ---
-                st.subheader("Headline Options (Pick one):")
-                st.text_area("Headlines", value=headlines, height=100)
-                
-                st.subheader("Your Ad Body:")
-                st.text_area("Body", value=description, height=400)
-                
-        except Exception as e:
-            st.error(f"Error: {e}")
+            <Input
+              id="portfolioLink"
+              label="External Portfolio Link"
+              placeholder="e.g. www.yourwebsite.com/portfolio"
+              value={formData.portfolioLink}
+              onChange={handleChange}
+            />
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="group w-fit mt-4 bg-slate-100 hover:bg-white text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Generate Title and Description
+                  <MoveRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Result Section - Takes up 5 columns */}
+          <div className="lg:col-span-5 relative">
+            <div className={`sticky top-8 transition-all duration-500 ${result ? 'opacity-100 translate-y-0' : 'opacity-100'}`}>
+              
+              {!result && !loading && (
+                 <div className="h-full min-h-[500px] bg-slate-900/30 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 p-8 text-center">
+                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                      <PenTool className="w-8 h-8 text-slate-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-300 mb-2">Ready to Write</h3>
+                    <p className="text-slate-500 max-w-xs leading-relaxed">
+                      Fill in the details on the left and hit generate to see your ad copy here.
+                    </p>
+                 </div>
+              )}
+
+              {loading && (
+                 <div className="h-full min-h-[500px] bg-slate-900/50 rounded-2xl flex flex-col items-center justify-center p-8 border border-slate-800">
+                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+                    <p className="text-slate-300">Analyzing your business details...</p>
+                 </div>
+              )}
+
+              {result && (
+                <div className="space-y-6 animate-fade-in-up">
+                  {/* Headlines */}
+                  <div className="bg-[#161b22] rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+                    <div className="px-5 py-4 border-b border-slate-800 flex justify-between items-center bg-[#1f2937]/30">
+                      <h3 className="font-semibold text-indigo-400 text-sm uppercase tracking-wider flex items-center gap-2">
+                        Headline Options
+                      </h3>
+                      <button 
+                        onClick={() => copyToClipboard(result.headlines)}
+                        className="text-slate-400 hover:text-white text-xs flex items-center gap-1 transition-colors px-2 py-1 hover:bg-slate-700 rounded"
+                      >
+                        <Copy className="w-3 h-3" /> Copy
+                      </button>
+                    </div>
+                    <div className="p-5">
+                      <textarea
+                        readOnly
+                        className="w-full h-32 text-slate-300 bg-transparent border-none p-0 text-sm focus:ring-0 resize-none leading-relaxed font-mono"
+                        value={result.headlines}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Body Copy */}
+                  <div className="bg-[#161b22] rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+                     <div className="px-5 py-4 border-b border-slate-800 flex justify-between items-center bg-[#1f2937]/30">
+                      <h3 className="font-semibold text-emerald-400 text-sm uppercase tracking-wider">
+                        Ad Description
+                      </h3>
+                       <button 
+                        onClick={() => copyToClipboard(result.description)}
+                        className="text-slate-400 hover:text-white text-xs flex items-center gap-1 transition-colors px-2 py-1 hover:bg-slate-700 rounded"
+                      >
+                        <Copy className="w-3 h-3" /> Copy
+                      </button>
+                    </div>
+                    <div className="p-5">
+                      <textarea
+                        readOnly
+                        className="w-full h-[400px] text-slate-300 bg-transparent border-none p-0 text-sm focus:ring-0 resize-none leading-relaxed font-mono scrollbar-thin scrollbar-thumb-slate-700"
+                        value={result.description}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
